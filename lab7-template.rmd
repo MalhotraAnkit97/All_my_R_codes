@@ -1,0 +1,158 @@
+---
+title: "STAT232 Lab #7"
+author: 
+- name: "_INSERT_YOUR_NAME_"
+  email: "_INSERT_YOUR_EMAIL_"
+# date: "2021/5/14"
+output:
+  html_document:
+    toc: yes
+---
+
+# **Discussion week 7 instructions**
+
+This week, we will review example code for polynomial regression and model evaluation metrics for regressions.
+
+- First, download the `rmd` file from iLearn. 
+- Open this `rmd` file in RStudio and click `Knit -> Knit to HTML` to render it to HTML format. (If you have `LaTex` installed on your computer, you can also render it to PDF format).
+- Read this `rmd` file and the rendered `html` file side-by-side, to see how this document was generated!
+- Be sure to play with this document! Change it. Break it. Fix it. The best way to learn R Markdown (or really almost anything) is to try, fail, then find out what you did wrong.
+- Read over the example code and the output. If you have any questions about certain functions or parameters, it is the time to ask!
+- There are some exercises through out this document. Replace **INSERT_YOUR_ANSWER** with your own answers. Knit the file to HTML, and check your results.
+
+<font color="blue">**Please comment your R code thoroughly, and follow the R coding style guideline (https://google.github.io/styleguide/Rguide.xml). Partial credit will be deducted for insufficient commenting or poor coding styles.**</font>
+
+**Lab submission guideline**
+
+- After you completed all exercises, save your file to `FirstnameLastname-SID-lab7.rmd` and save the rendered html/pdf file to `FirstnameLastname-SID-lab7.html` or `FirstnameLastname-SID-lab7.pdf`.
+- Submit **BOTH your source `rmd` file and the knitted `html` or `pdf` file** to **eLearn**. Do NOT create a zip file. You can submit multiple times, you last submission will be graded.
+
+***
+
+## Install necessary package
+Note that you only need to install each package once. Then you can comment out the following installation lines.
+
+```{r, collapse=T}
+#install.packages("MASS")
+```
+
+## Load necessary packages
+```{r, collapse=T}
+library(tidyverse) # for `ggplot2`, `dplyr`, `tibble`, and more
+
+library(MASS) # for the `Boston` data set
+```
+
+## Set the random seed
+```{r, collapse=T}
+# set the random seed so that the analysis is reproducible
+set.seed(232)
+```
+
+# The `Boston` data set
+
+The `Boston` data set (included in the `MASS` library) contains housing values in 500+ suburbs of Boston.
+
+```{r, collapse=T}
+?Boston # full documentation
+dim(Boston)
+glimpse(Boston)
+```
+
+
+***
+
+# **Lecture Review - Multiple linear regression**
+
+First, let's build a multiple linear regression which uses the **full set** of predictors to estimate the median housing values `medv`.
+
+```{r, collapse=T}
+mlr <- lm(medv ~ ., data = Boston)
+summary(mlr)
+```
+
+### **Exercise #1**
+
+Study the `summary(mlr)` output. Which predictor is the most statistically significant (contributed the most to `medv`)? Explain your answer.
+
+**INSERT_YOUR_ANSWER**
+
+Interpret the coefficient of the most significant predictor. (How much did the predictor contribute to the prediction of `medv`?)
+
+**INSERT_YOUR_ANSWER**
+
+Which predictor is the least statistically significant (contributed the least to `medv`)? Explain your answer.
+
+**INSERT_YOUR_ANSWER**
+
+***
+
+### **Exercise #2**
+
+Explain why the $R^2$ value `r summary(mlr)$r.squared` is different from the adjusted $R^2$ value `r summary(mlr)$adj.r.squared`?
+
+**INSERT_YOUR_ANSWER**
+
+***
+
+# **Lecture Review - Polynomial Regression**
+
+Suppose we start with a simple linear regression to predict median housing values `medv` using only one predictor `lstat` -- percent of lower status population.
+
+```{r, collapse=T}
+lm.fit <- lm(medv ~ lstat, Boston)
+summary(lm.fit)
+```
+
+Using the `lm.fit` results, we can get the predicted values from our least squares regression fit and generate the following residual plot.
+
+```{r, collapse=T}
+# extract the predictions / fitted values
+predictions <- lm.fit$fitted.values
+# or call the predict() function
+predictions <- predict(lm.fit)
+
+# extract the residuals
+residuals <- lm.fit$residuals
+# or calculate it yourself
+residuals <- Boston$medv - lm.fit$fitted.values
+residuals <- Boston$medv - predict(lm.fit)
+
+# draw the residual plot
+diagnostics <- tibble(predictions = lm.fit$fitted.values,
+                      residuals = lm.fit$residuals)
+
+ggplot(diagnostics, aes(x = predictions, y = residuals)) +
+  geom_point() +
+  geom_smooth(se = F) +
+  geom_hline(yintercept = 0, linetype = 2)
+```
+
+The residual plot suggests that there is some non-linearity in the data. 
+
+Therefore, we propose to use a polynomial regression model (degree of 2).
+
+```{r, collapse=T}
+lm.fit2 <- lm(medv ~ lstat + I(lstat^2), Boston)
+summary(lm.fit2)
+```
+
+Alternatively, we can use the `poly()` function to build a polynomial regression model.
+
+```{r, collapse=T}
+lm.fit2poly <- lm(medv ~ poly(lstat, 2), Boston)
+summary(lm.fit2poly)
+```
+
+### **Exercise #3**
+
+(a) Why are the coefficients estimated by `lm.fit2` and `lm.fit2poly` different? 
+
+**INSERT_YOUR_ANSWER**
+
+(b) Compare the `summary(lm.fit)` output and the `summary(lm.fit2poly)` output. Which model is better?   
+Explain your answer. What statistic did you use to draw your conclusion?
+
+**INSERT_YOUR_ANSWER**
+
+***

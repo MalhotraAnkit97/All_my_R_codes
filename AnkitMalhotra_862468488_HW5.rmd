@@ -1,0 +1,529 @@
+---
+title: 'STAT232 HW5'
+author: 
+- name: Ankit Malhotra
+  email: amalh017@ucr.edu
+output:
+  html_document:
+    toc: yes
+    toc_depth: 4
+---
+
+## **Homework #5 instructions**
+
+**Review [the ISLR textbook](https://www.statlearning.com) Chapter 3 "Linear Regression", as well as lecture notes on map visualization and linear regression before answering the homework questions**.
+
+This homework contains 2 questions, each with multiple parts, 100 points in total.  
+
+<font color="blue">Replace **INSERT_YOUR_ANSWER** with your own answers.</font>
+
+- First open this `rmd` file in RStudio and click `Knit -> Knit to HTML` to render it to HTML format. 
+- It is best to read this `rmd` file and the rendered `html` file side-by-side, while you are working on this homework.
+- If the question asks you to write some R code, remember to put your code into a **R code chunk**. Make sure both your R code chunk and the output messages / figures are visible in the rendered `html` file.
+- For this homework, use **ggplot2** to visualize your data.
+
+- <font color="blue">**Please comment your R code thoroughly, and follow the R coding style guideline (https://google.github.io/styleguide/Rguide.xml). Partial credit will be deducted for insufficient commenting or poor coding styles.**</font>
+
+- If you have any question about this homework assignment, we encourage you to post it on [**Piazza**].
+
+### **Homework submission guideline**
+
+- Late submission penalties.  
+    - Submissions up to 24 hours late will incur a 20% deduction.  
+    - Submissions up to 48 hours late will incur a 50% deduction.
+    - Submissions more than 48 hours late will receive 0.
+
+- <font color="blue">**If you are using one or both of your free late days, please state here: **</font> **INSERT_YOUR_ANSWER**
+
+- After you complete all questions, save your `rmd` file to `FirstnameLastname-SID-HW5.rmd` and save the rendered `html` or `pdf` file to `FirstnameLastname-SID-HW5.html` or `FirstnameLastname-SID-HW5.pdf`.
+- Submit **BOTH your source `rmd` file and the knitted `html` or `pdf` file** to **GradeScope**. Do NOT create a zip file. You can submit multiple times, you last submission will be graded.
+
+***
+
+## **Acknowledgements**
+
+<font color="blue">Please list all the help you have received for completing this homework.</font>
+
+**INSERT_YOUR_ANSWER**
+
+***
+
+**Install necessary packages**
+
+Note that you only need to install each package once. Then you can comment out the following installation lines.
+
+``````{r}
+#install.packages("maps")d`
+#install.packages("mapproj")
+```
+
+***
+
+**Load necessary packages**
+
+```{r, collapse=T}
+library(tidyverse) # for `ggplot2`, `dplyr`, and more
+
+library(maps) # for map visualization
+#library(mapdata)
+library(mapproj) 
+
+library(datasets) # for `state` data set
+library(nycflights13) # for the 2013 NYC flights data set
+```
+
+***
+
+## **Question 1 [45pt] Map visualization with `ggplot2`**
+
+Recall in HW1, we used the `maps` package to generate map visualizations. In this homework, we will draw maps with `ggplot2`. 
+
+The `maps` package comes with a plotting function, but, we will opt to use `ggplot2` functions (`geom_polygon` and `geom_map`) to plot the maps in the `maps` package.
+
+Recall that `ggplot2` operates on data frames. We will use the `map_data()` function (provided by `ggplot2`), which turns a series of points along an outline into a data frame of those points.
+
+### (a) [5pt] Plot the USA map
+
+First we load the USA map from `maps`.
+```{r, collapse=T}
+usa_map <- map_data("usa")
+dim(usa_map)
+glimpse(usa_map)
+```
+
+In the lecture, we have learned how to use `geom_polygon()` to make a simple black map (no line color, but with a black fill).
+
+```{r}
+ggplot(data = usa_map) + 
+  geom_polygon(aes(x = long, y = lat, group = group)) + 
+  coord_quickmap()
+```
+
+Google the coordinates of UCR, and then use `geom_point()` to mark the location of UCR on the USA map.
+In addition, change the outline/border color as well as the fill-in color of your map.
+
+**INSERT_YOUR_ANSWER**
+```{r}
+ggplot(data = usa_map) + 
+  geom_polygon(aes(x = long, y = lat, group = group), color = "blue", fill = "lightgray") + 
+  geom_point(x = -117.3424, y = 33.9556, color = "red", size = 3) +
+  coord_quickmap()
+```
+
+
+***
+
+### (b) [15pt] Plot the states map
+
+In addition to `geom_polygon()`, we can use `geom_map()` to draw maps too. Basically, `geom_map()` acts as a wrapper of `geom_polygon()`. See more details in the `geom_map()` documentation @ http://ggplot2.tidyverse.org/reference/geom_map.html
+
+Here is the example code of a states map from the lecture. 
+We can plot all the states, map the `fill` aesthetic to `region` and set the the lines of state borders to white color.
+
+```{r, collapse=T}
+states_map <- map_data("state")
+dim(states_map)
+glimpse(states_map)
+```
+
+```{r, collapse=T}
+ggplot() + 
+  geom_map(data = states_map, map = states_map,
+           aes(map_id = region, fill = region), color="white") + 
+  expand_limits(x = states_map$long, y = states_map$lat) +
+  coord_quickmap() +
+  guides(fill = FALSE) # do this to leave off the color legend
+```
+
+Next, we will use the built-in `state` data sets in R to annotate our states map. In particular, `state.x77` is a two-dimensional array containing 8 variables and data from all 50 states.
+
+```{r, collapse=T}
+?state.x77
+head(state.x77)
+
+state_data <- as.data.frame(state.x77)
+state_data$State <- tolower(rownames(state_data))
+state_data %>% glimpse()
+```
+
+Below is the example code from the lecture for a state population map. We first create an aesthetic mapping for `map_id` to the column `State` (state names in lower case) in the `state_data` data frame. We then call `geom_map` again and map the `fill` aesthetic to the `Population` variable in `state_data`.
+
+```{r, collapse=T}
+ggplot(data = state_data, aes(map_id = State))+ 
+  geom_map(map = states_map,
+           aes(fill = Population)) + 
+  expand_limits(x = states_map$long, y = states_map$lat) +
+  coord_quickmap() 
+```
+
+#### (i) [5pt] Draw your own states map and map the `fill` aesthetic to `Income` in the `state.x77` data set
+
+**INSERT_YOUR_ANSWER**
+```{r}
+ggplot(data = state_data, aes(map_id = State))+ 
+  geom_map(map = states_map,
+           aes(fill = Income)) + 
+  expand_limits(x = states_map$long, y = states_map$lat) +
+  coord_quickmap() 
+```
+
+
+***
+
+#### (ii) [10pt] Add 50 colorful points to your map 
+Use one point to mark one state (state coordinates can be found in `state.center`). Map the color of the points to `state.region`. Map the `size` aesthetic of the points to `Population`.
+
+```{r, collapse=T}
+head(state.center)
+head(state.region)
+```
+
+**INSERT_YOUR_ANSWER**
+```{r}
+ggplot(data = state_data, aes(map_id = State)) +
+  geom_map(map = states_map,
+           aes(fill = Income, color = state.region)) +
+  # geom_point(data = state.center,
+  #             aes(x = long, y = lat, color = state.region, size = Population)) +
+  geom_point(aes(x = state.center$x, y = state.center$y, color = state.region, size = Population))
+  expand_limits(x = state.center$x, y = state.center$y)
+```
+
+
+***
+
+### (c) [25pt] NYC flight destination map
+
+Recall `nycflights13::flights` data set contains all 336,776 flights that departed from New York City in 2013.
+
+```{r, collapse=T}
+?flights # full documentation
+glimpse(flights)
+```
+
+#### (i) [10pt] Count the number of flights per destination
+
+How many unique destination airports did these NYC flights connected to? How many **non-canceled** flights per destination? Which destination had the largest number of arrival flights from NYC? Which destination had the smallest number of arrival flights from NYC?
+
+**Note:** Recall in HW4 we have cleaned the `flights` data by removing flight record that has missing values in `dep_delay` or `arr_delay`, and save the result as the **non-canceled** flights.
+
+```{r}
+not_canceled <- filter(flights, !is.na(dep_delay), !is.na(arr_delay))
+
+not_canceled <- not_canceled %>% 
+  group_by(dest) %>%
+  summarize(num_flights = n()) %>% arrange(num_flights)
+not_canceled
+```
+
+Destination with the largest number of arrival flights from NYC: ATL 
+Destination with the smallest number of arrival flights from NYC: LEX
+*** 
+
+#### (ii) [15pt] Mark all destination airports on a states map
+Find out the coordinates of the destination airports from `nycflights13::airports`. Draw each destination airport as a point on a states map, and map a point aesthetic to the number of **non-canceled** flights flew to that destination from NYC in 2013.
+
+**Hint:** Suppose that you have saved your list of unique destinations and their corresponding flight counts in a tibble called `per_dest`. Then you can _join_ `per_dest` and `airports` using destination airport FAA code as the _key_.
+
+```{r, eval=F}
+#?airports
+airports %>% glimpse()
+# left_join(per_dest, airports, by=c("dest"="faa"))
+```
+
+**INSERT_YOUR_ANSWER**
+
+```{r}
+dest_map <- not_canceled %>%
+  left_join(airports, by = c("dest" = "faa"))
+
+states_map <- map_data("state")
+
+ggplot() +
+  geom_polygon(data = states_map, aes(x = long, y = lat, group = group), fill = "gray80") +
+  geom_point(data = dest_map, aes(x = lon, y = lat, size = num_flights), color = "dodgerblue", alpha = 0.7) +
+  scale_size_continuous(range = c(1, 10), name = "Non-canceled Flights from NYC in 2013") +
+  labs(x = "Longitude", y = "Latitude", title = "Destination Airports from NYC in 2013") +
+  theme_bw()
+```
+
+
+Pay attention to the warning message. Which destination airports have missing values?
+```{r}
+missing_dests <- dest_map %>%
+  filter(is.na(lat) | is.na(lon)) %>%
+  select(dest) %>%
+  distinct()
+missing_dests
+```
+
+
+**
+The below 4 have missing values : 
+
+BQN				
+PSE				
+SJU				
+STT				
+**
+
+***
+
+## **Question 2 [55pt] Simple linear regression**
+
+### (a) [10pt] Population regression line vs least squares regression line
+
+In this question, we will reproduce the left panel of Figure 3.3 in the **ISLR** textbook.
+
+Write your own R code the simulate 100 data points from the following model.
+
+$$Y=2+3X+\epsilon$$
+$$X \sim Uniform(A=-2, B=2)$$
+$$\epsilon \sim N(\mu=0, \sigma=2)$$
+
+Then use `ggplot2` to make a scatter plot of the 100 data points $(x_1,y_1), \cdots (x_{100},y_{100})$. Add the population regression line $Y=2+3X$ in red color; add the least squares fit of your simulated data as a blue line. 
+
+**INSERT_YOUR_ANSWER**
+```{r}
+set.seed(1997)
+
+X <- runif(100, min = -2, max = 2)
+
+epsilon <- rnorm(100, mean = 0, sd = 2)
+
+Y <- 2 + 3 * X + epsilon
+
+data <- data.frame(X, Y)
+
+# # Plot the data points and the population regression line
+# plot(data, main = "Population Regression Line vs Least Squares Regression Line",
+#      xlab = "X", ylab = "Y", xlim = c(-2, 2), ylim = c(-6, 10))
+# abline(a = 2, b = 3, col = "red", lwd = 2, lty = 2)
+
+scatter_plot <- ggplot(data, aes(x = X, y = Y)) +
+  geom_point(alpha = 0.5) +
+  xlab("X") +
+  ylab("Y") +
+  theme_minimal()
+
+scatter_plot <- scatter_plot +
+  geom_abline(intercept = 2, slope = 3, color = "red", linetype = "dashed")
+
+scatter_plot <- scatter_plot +
+  stat_smooth(method = "lm", color = "blue", se = FALSE)
+
+print(scatter_plot)
+```
+
+
+```{r, collapse=T}
+# Always remember to set the random seed for simulation studies
+set.seed(1997) # feel free to change 232 to your lucky number
+```
+
+***
+
+### (b) [10pt] Estimate the coefficients $\beta_0$ and $\beta_1$ 
+
+In the lecture, we have learned that the analytical solution of the least squares regression $Y = \beta_0 + \beta_1 X + \epsilon$ is
+
+$$ 
+\begin{aligned}
+ \hat{\beta_1} & = 
+ \frac{\sum_{i=1}^{n} (x_i - \bar{x})(y_i - \bar{y})}
+ {\sum_{i=1}^{n} (x_i - \bar{x})^2} \\
+ \hat{\beta_0} & = \bar{y} - \hat{\beta_1} \bar{x}
+\end{aligned} 
+$$
+
+Write your own R code to calculate $\hat{\beta_0}$ and $\hat{\beta_1}$ using the above equations. Compare your results with the coefficients calculated by the `lm` function. Are they the same?
+
+**INSERT_YOUR_ANSWER**
+```{r}
+# Calculate the sample mean of X and Y
+x_mean <- mean(data$X)
+y_mean <- mean(data$Y)
+
+# Calculate the numerator and denominator of the formula for beta1
+num <- sum((data$X - x_mean) * (data$Y - y_mean))
+den <- sum((data$X - x_mean)^2)
+
+# Calculate beta1
+beta1_hat <- num / den
+
+# Calculate beta0
+beta0_hat <- y_mean - beta1_hat * x_mean
+
+# Display the estimated coefficients
+cat("Estimated coefficients using the formula:\n")
+cat("beta0 =", round(beta0_hat, 3), "\n")
+cat("beta1 =", round(beta1_hat, 3), "\n")
+```
+
+```{r}
+# Calculate the coefficients using the lm function
+coefs <- lm(Y ~ X, data = data)$coefficients
+
+# Print the coefficients
+print(paste("beta0 (lm) =", coefs[1]))
+print(paste("beta1 (lm) =", coefs[2]))
+```
+
+Yes they are the same!
+
+
+***
+
+### (c) [20pt] Assess accuracy of the regression model
+
+Recall that the accuracy of a linear regression fit is typically assessed using the **residual standard error (RSE)** and the **$R^2$ statistic**.
+
+```{r}
+# Set seed for reproducibility
+set.seed(123)
+
+# Generate predictor variable
+x <- runif(100, min = -2, max = 2)
+
+# Generate response variable
+y <- 2 + 3 * x + rnorm(100, mean = 0, sd = 2)
+
+# Fit linear regression model
+model <- lm(y ~ x)
+
+# Calculate RSE
+rse <- summary(model)$sigma
+cat("Residual standard error (RSE):", rse, "\n")
+
+# Calculate R-squared
+r_squared <- summary(model)$r.squared
+cat("R-squared ($R^2$):", r_squared, "\n")
+```
+
+
+#### (i) [10pt] Calculate the residual standard error (RSE)
+
+Residual standard error (RSE) is an estimate of $\sigma$, the standard deviation of $\epsilon$.
+
+$$
+\begin{aligned}
+\text{RSE} = \hat{\sigma} &= \sqrt{\frac{1}{n-2}\text{RSS}} \\
+&= \sqrt{\frac{1}{n-2} \sum_{i=1}^{n} ( y_i - \hat{y_i} )^2} 
+\end{aligned}
+$$ 
+Write your own R code to calculate RSE using the above equation. Compare your result with the residual standard error calculated by the `lm` function. Are they the same? How does the RSE value relate to our noise model $\epsilon \sim N(\mu=0, \sigma=2)$?
+
+**INSERT_YOUR_ANSWER**
+```{r}
+# Calculate RSS
+rss <- sum((y - predict(model))^2)
+
+# Calculate RSE
+rse_manual <- sqrt(rss / (length(x) - 2))
+cat("Residual standard error (RSE) - manual calculation:", rse_manual, "\n")
+```
+
+```{r}
+set.seed(123)
+
+x <- runif(100, min = -2, max = 2)
+
+y <- 2 + 3 * x + rnorm(100, mean = 0, sd = 2)
+
+# Fit linear regression model
+model <- lm(y ~ x)
+
+# Calculate RSE
+rse <- summary(model)$sigma
+cat("Residual standard error (RSE):", rse, "\n")
+```
+
+Yes, it is the same.
+
+***
+
+#### (ii) [10pt] Calculate the $R^2$ statistics
+
+Write your own R code to compute the $R^2$ value using the following equations.
+
+$$
+\begin{aligned}
+\text{TSS} & = \sum_{i=1}^{n} (y_i - \bar{y})^2 \\
+\text{RSS} & = \sum_{i=1}^{n} \left(y_i - \hat{f}(x_i) \right)^2 \\
+R^2 & = \frac{\text{TSS}-\text{RSS}}{\text{TSS}} = 1 - \frac{\text{RSS}}{\text{TSS}} \\
+\end{aligned}
+$$
+Compare your result with the R-squared value calculated by the `lm` function. Are they the same? 
+
+**INSERT_YOUR_ANSWER**
+
+```{r}
+# Calculate TSS
+tss <- sum((y - mean(y))^2)
+
+# Calculate RSS
+rss <- sum((y - predict(model))^2)
+
+# Calculate R-squared
+r_squared <- 1 - rss / tss
+cat("R-squared ($R^2$):", r_squared, "\n")
+```
+
+```{r}
+# Calculate R-squared using lm() function
+cat("R-squared ($R^2$) using lm():", summary(model)$r.squared, "\n")
+```
+
+Yes, it is the same.
+
+***
+
+### (d) [15pt] Simulations of least squares regression
+
+Now, let's repeat the simulation 10 times, and reproduce the right panel of Figure 3.3 in the **ISLR** textbook.
+
+**Notes**: 
+
+- You can draw all the least squares lines using the same blue color.
+- Write your code using a `for` loop, rather than manually copying and pasting your code 10 times.
+- You can save your ggplot to a variable (e.g. `gg`) and keep adding new layers inside your for loop. So the pseudocode will look like:
+
+```{r, eval=F}
+gg <- ggplot() +
+  geom_abline(draw the population regression line)
+
+for ( every simulation ) {
+  ## add your simulation code here
+  gg <- gg + 
+    geom_smooth(draw the sample regression line) ## alternatively you can use geom_abline()
+}
+
+gg ## call gg at the end to plot it.
+```
+
+**INSERT_YOUR_ANSWER**
+
+```{r}
+population_line <- lm(y ~ x)
+
+gg <- ggplot() +
+  geom_abline(intercept = coef(population_line)[1], slope = coef(population_line)[2], color = "red", linetype = "dashed") +
+  xlim(-2, 2) +
+  ylim(-6, 10) +
+  xlab("x") +
+  ylab("y")
+
+
+for (i in 1:10) {
+  y <- 2 + 3 * x + rnorm(100, mean = 0, sd = 2)
+  sample_line <- lm(y ~ x)
+  gg <- gg +
+    geom_abline(intercept = coef(sample_line)[1], slope = coef(sample_line)[2], color = "blue")
+}
+
+# Plot ggplot
+print(gg)
+```
+
+
+***

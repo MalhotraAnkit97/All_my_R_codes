@@ -1,0 +1,276 @@
+---
+title: "Intro to GGplot2"
+output: html_notebook
+---
+
+FOR ADDING A PICTURE, ADD THE PICTURE TO THE LOCAL FOLDER AND ADD THE PATH / URL OF THE PICTURE TO R AND PUT IT IN PARENTHESIS AND WE ARE GOOD
+
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+
+?mpg
+
+head(mpg)
+
+glimpse(mpg)
+
+ggplot(data = mpg) +  # creates a canvas / adds just a skeleton to the actual graph we eentually want to build
+  geom_point(mapping = aes(x = displ, y = hwy))
+
+ggplot(data = mpg) +  # creates a canvas / adds just a skeleton to the actual graph we eentually want to build
+  geom_point(mapping = aes(x = displ, y = hwy, color = class)) # class is a column / data point / variable in the dataset, and when we say
+# color = class, it takes all the unique values of that column and colors it differently
+
+ggplot(data = mpg) +  # creates a canvas / adds just a skeleton to the actual graph we eentually want to build
+  geom_point(mapping = aes(x = displ, y = hwy, size = class)) # class is a column / data point / variable in the dataset, and when we say
+# size = class, it takes all the unique values of that column and sizes it differently
+
+ggplot(data = mpg) +  # creates a canvas / adds just a skeleton to the actual graph we eentually want to build
+  geom_point(mapping = aes(x = displ, y = hwy, alpha = class)) # class is a column / data point / variable in the dataset, and when we say
+# alpha = class, it takes all the unique values of that column and uses different levels of transparency with it.
+
+ggplot(data = mpg) +  # creates a canvas / adds just a skeleton to the actual graph we eentually want to build
+  geom_point(mapping = aes(x = displ, y = hwy, alpha = class, color = class)) # class is a column / data point / variable in the dataset, and when we say
+# alpha = class, it takes all the unique values of that column and uses different levels of transparency with it.
+
+
+ggplot(data = mpg) +  # creates a canvas / adds just a skeleton to the actual graph we eentually want to build
+  geom_point(mapping = aes(x = displ, y = hwy, shape = class)) # class is a column / data point / variable in the dataset, and when we say
+# shape = class, it takes all the unique values of that column and uses different shapes built in with ggplot2.
+
+# only 6 DIFFERENT shapes available in R
+
+ggplot(data = mpg) +  # creates a canvas / adds just a skeleton to the actual graph we eentually want to build
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+             facet_wrap(~ class, nrow = 2)
+#facet_wrap creates different graphs for all the unique values in variables
+# nrow basically puts the different graphs in  the number of rows mentioned in the code above
+
+ggplot(data = mpg) +  # creates a canvas / adds just a skeleton to the actual graph we eentually want to build
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+             facet_grid(drv ~ class)
+# basically creates subgrpoups of data based on the parameter
+```
+```{r}
+library(gridExtra)
+
+plot1 <- ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy))
+plot2 <- ggplot(data = mpg) + 
+  geom_smooth(mapping = aes(x = displ, y = hwy))
+
+grid.arrange(plot1, plot2, ncol=2)
+
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) + 
+  geom_smooth(mapping = aes(x = displ, y = hwy))
+
+ggplot(data = mpg) + 
+  geom_smooth(mapping = aes(x = displ, y = hwy, group = drv))
+
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, col = drv)) + 
+  geom_smooth(mapping = aes(x = displ, y = hwy, linetype = drv, col = drv))
+
+
+
+ggplot(data = mpg, mapping = aes(x=displ, y=hwy, col = drv)) +
+  geom_point() + 
+  geom_smooth(mapping = aes(linetype = drv))
+
+ggplot(data = mpg, mapping = aes(x=displ, y=hwy, col = drv)) +
+  geom_point() + 
+  geom_smooth(se=FALSE)
+
+ggplot(data = mpg, mapping = aes(x=displ, y=hwy, col = drv)) +
+  geom_point() + 
+  geom_smooth(method = "lm")
+
+
+```
+
+trying ggplot for bars
+
+```{r}
+
+head(diamonds)
+
+ggplot(data = diamonds) +
+  geom_bar(mapping = aes(x = cut))
+```
+
+
+```{r}
+library(gridExtra)
+gg <- ggplot(data = diamonds, mapping = aes(x=cut))
+plot1 <- gg + geom_bar()
+plot2 <- gg + stat_count()
+grid.arrange(plot1, plot2, ncol = 2)
+```
+
+```{r}
+demo <- tribble(
+  ~a, ~b,
+  "bar_1", 20,
+  "bar_2", 30,
+  "bar_3", 40
+)
+gg <- ggplot(data = demo, mapping = aes(x=a))
+plot1 <- gg + geom_bar()
+plot2 <- gg + geom_bar(mapping = aes(y = b), stat = "identity")
+plot3 <- gg + geom_col(mapping = aes(y = b))
+grid.arrange(plot1, plot2, plot3, ncol = 3)
+```
+```{r}
+plot11 <- ggplot(data = diamonds) + geom_bar(mapping = aes(x=cut, y = after_stat(prop), group = 1, fill = cut))
+plot12 <- ggplot(data = diamonds) + geom_bar(mapping = aes(x=cut, y = after_stat(prop)))
+plot13 <- ggplot(data = diamonds) + geom_bar(mapping = aes(x=cut, fill = cut))
+plot14 <- ggplot(data = diamonds) + geom_bar(mapping = aes(x=cut, color = cut))
+grid.arrange(plot11, plot12, plot13, plot14, ncol=2)
+```
+
+```{r}
+plot20 <- ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, color = clarity, fill = clarity))
+
+plot21 <- ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, color = clarity, fill = clarity), position = "identity") # not the ideal way to draw a graph
+
+
+grid.arrange(plot20, plot21, ncol = 2)
+```
+
+```{r}
+plot30 <- ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, color = clarity, fill = clarity), alpha = 1/5, position = "identity")
+
+plot31 <- ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, color = clarity, fill = clarity), position = "identity", fill = NA) # not the ideal way to draw a graph either
+
+plot32 <- ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity), position = "fill")
+
+
+grid.arrange(plot30, plot31, plot32, ncol = 1)
+```
+
+```{r}
+plot33 <- ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity), position = "dodge")
+plot33
+```
+
+```{r}
+gg <- ggplot(data = diamonds, mapping = aes(x=carat)) +
+  theme(legend.position = "bottom", legend.text = element_text(size = 5))
+plot35 <- gg + geom_histogram(aes(fill=cut), binwidth=0.5)
+plot36 <- gg + geom_freqpoly(aes(color=cut), binwidth=0.5)
+grid.arrange(plot35, plot36, ncol=2)
+```
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_histogram(aes(x=carat, fill=cut), binwidth = 0.5, position = "dodge") +
+  theme(legend.position = "bottom")
+```
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_freqpoly(aes(x=carat, y=after_stat(density), color=cut), binwidth = 0.5) +
+  theme(legend.position = "bottom")
+```
+
+```{r}
+ggplot(data = diamonds, mapping = aes(x=carat)) + 
+  geom_histogram(aes(y=after_stat(density)), binwidth = 0.1, color = "black", fill = "white") +
+  geom_density(alpha = 0.2, fill = "#FF6666")
+```
+**BOXPLOT**
+
+```{r}
+ggplot(data=mpg) + 
+  geom_boxplot(mapping = aes(x = year, y = hwy))
+```
+
+```{r}
+ggplot(data=mpg) + 
+  geom_boxplot(mapping = aes(x = class, y = hwy))
+```
+```{r}
+ggplot(data = mpg) + 
+  geom_boxplot(mapping = aes(x=reorder(class, hwy, FUN = median), y = hwy)) + 
+  xlab('class')
+  ylab('highway fuel efficiency')
+```
+
+```{r}
+ggplot(data = mpg) + 
+  geom_boxplot(mapping = aes(x=reorder(class, hwy, FUN = median), y = hwy, fill = class)) + 
+  xlab('class') +
+  coord_flip() + 
+  legend.position = None
+```
+
+```{r}
+ggplot(data = mpg) + 
+  geom_violin(mapping = aes(x = class, y = hwy))
+```
+## INSTALL PACKAGES FOR DIFFERENT COLOR PALLETTES TO MAKE IT LOOK MORE VISUALLY APpealing
+
+
+```{r}
+
+ggplot(data = count(x = diamonds, cut, clarity)) + 
+  geom_tile(mapping = aes(x=cut, y=clarity, fill = n))
+
+
+
+
+
+
+```
+
+What is n? Is it the default column name given to aggregated outputs?
+
+Can we make like an environment or a file which renders all the packages we need at once? like requirements.txt in python    
+
+So using jitter doesnt alter the accuracy of data?
+
+```{r}
+library(gridExtra)
+
+plot101 <- ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy))
+plot102 <- ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy), position = "jitter")
+grid.arrange(plot101, plot102, ncol = 2)
+```
+
+
+
+```{r}
+set.seed(123)
+plot201 <- ggplot(data = mpg, mapping = aes(x = drv, y = hwy)) + 
+  geom_point(position = "jitter")
+plot202 <- ggplot(data = mpg, mapping = aes(x = drv, y = hwy)) + 
+  geom_jitter()
+grid.arrange(plot201, plot202, ncol = 2)
+```
+
+
+Controlling the jittering
+
+```{r}
+set.seed(999)
+p1 <- ggplot(data = mpg, mapping = aes(x=drv, y=displ)) +
+  geom_point()
+p2 <- p1 + geom_jitter(col="red")
+p3 <- p1 + geom_jitter(col = "green", width = 0.2, height = 4)
+grid.arrange(p2, p3, ncol = 2)
+```
+
+
+
+

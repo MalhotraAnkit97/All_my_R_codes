@@ -1,0 +1,485 @@
+---
+title: "STAT 232 Midterm"
+author:
+- name: Ankit Malhotra
+  email: amalh017@ucr.edu
+output:
+  html_document:
+    toc: true
+  pdf_document:
+    toc: true
+---
+
+***
+
+## **UCR Academic Integrity Policy**
+
+**Please sign and date below.**
+
+<font color="blue">
+**I have completed this exam in compliance with the [UC Riverside Academic Integrity Policy](http://conduct.ucr.edu/policies/academicintegrity.html).**     
+Name: Ankit Malhotra    
+Date: 02/24/2024  
+</font>
+
+***
+
+## **Midterm Instructions**
+
+- **This midterm exam is open book and open Internet access, but absolutely no communicating with other humans.**
+
+    - **Late submissions will NOT be accepted!**
+ 
+- There are six questions, each with multiple parts, 150 points in total.
+
+- Use **ggplot2** and **dplyr** to visualize and transform the data.
+
+- If you have any question about the midterm, please post it on [Piazza].
+
+- **Submission guidelines**
+
+    - Answer each question by replacing **INSERT_YOUR_ANSWER** with your own answers. 
+    
+    - **Please comment your R code thoroughly, and follow the R coding style guideline (https://google.github.io/styleguide/Rguide.xml). Partial credit will be deducted for insufficient commenting or poor coding styles.**
+    
+    - After completing all questions, **sign the UCR Academic Integrity Policy acknowledgment above**.
+    
+    - Save your `rmd` file to `FirstnameLastname-SID-Midterm.rmd` and save the rendered file to `FirstnameLastname-SID-Midterm.html` or `FirstnameLastname-SID-Midterm.pdf`.
+
+    - Submit **BOTH your source `rmd` file and the knitted `html` or `pdf` file** to **GradeScope**. Do NOT create a zip file. You can submit multiple times, you last submission will be graded.
+
+- *NO CHEATING & GOOD LUCK!!!*
+
+***
+
+### Install necessary packages
+
+Note that you only need to install each package once. Then you can comment out the following installation lines.
+
+``````{r, collapse=T}
+#install.packages("tidyverse")
+#install.packages("nycflights13")
+```
+
+### Load necessary packages
+
+```{r, collapse=T}
+library(tidyverse) # for `ggplot2`, `dplyr`, and more
+
+library(nycflights13) # for nycflights13 data set
+
+sessionInfo()
+```
+
+***
+
+## **The `nycflights13` data set**
+
+In this midterm, you will use the `nycflights13::flights` data which contains all 336,776 flights that departed from New York City in 2013. The data comes from the [US Bureau of Transportation Statistics](http://www.transtats.bts.gov/DatabaseInfo.asp?DB_ID=120&Link=0).
+
+Reference manual: [nycflights13.pdf](https://cran.r-project.org/web/packages/nycflights13/nycflights13.pdf)
+
+```{r, collapse=T}
+library(nycflights13)
+# ?flights # full documentation of `flights` table
+glimpse(flights)
+```
+
+In addition to the `flights` data, the `nycflights13` data set also include four other four data tables.
+
+```{r, collapse=T}
+# ?airports # full documentation of `airports` table
+glimpse(airports)
+```
+
+```{r, collapse=T}
+# ?planes # full documentation of `planes` table
+glimpse(planes)
+```
+
+```{r, collapse=T}
+# ?weather # full documentation of `weather` table
+glimpse(weather)
+```
+
+```{r, collapse=T}
+# ?airlines # full documentation of `airlines` table
+glimpse(airlines)
+```
+
+The relationship between the five data tables are shown in the following diagram.
+
+![](http://r4ds.had.co.nz/diagrams/relational-nycflights.png) 
+
+***
+
+## **Q1 [10 pt]** Data cleaning
+
+(a) There are some missing values in the `dep_delay` and `arr_delay` columns.
+How many flight records have missing values in `dep_delay`? 
+How many flight records have missing value in `arr_delay`?
+
+These missing values were caused by **canceled flights**. If we define canceled flights as the ones contain missing values in **either** `dep_delay` **or** `arr_delay`, how many canceled flights in total? 
+
+```{r}
+# Gathering all flights data below
+all_flights_data <- flights
+all_flights_data
+
+fliter_dep_delay_count <- count(filter(all_flights_data, is.na(dep_delay)))
+print(fliter_dep_delay_count)
+
+# 8255 dep_delay missing counts
+
+fliter_arr_delay_count <- count(filter(all_flights_data, is.na(arr_delay)))
+print(fliter_arr_delay_count)
+
+#9430 missing count in arr_delay
+
+#Filtering out all cancelled flights (8255 x 19)
+canceled_flights <- filter(all_flights_data, is.na(dep_delay) | is.na(arr_delay))
+canceled_flights
+# 9430 total cancelled flights
+
+
+```
+
+
+(b) clean the `flights` data by removing flight record that contain missing values in either `dep_delay` or `arr_delay`, and save the **non-canceled flights** in a new tibble `not_canceled`. 
+
+```{r}
+#Filtering out all cancelled flights (327,346 × 19)
+not_canceled <- filter(flights, !is.na(dep_delay) | !is.na(arr_delay))
+not_canceled
+```
+
+
+***
+
+<font color="blue">**For the following questions, use `not_canceled` flights only unless specified by the instruction.**</font>
+
+## **Q2 [20 pt]** Data transformation
+
+Find the **non-canceled** flights that satisfy each of the following conditions.
+
+(a) Flew during the summer months (June, July, August, September).
+
+```{r}
+filter(not_canceled, month %in% c(6:9))
+```
+
+
+(b) Were operated by American Airlines, and had an arrival delay of five or more hours.
+
+```{r}
+filter(not_canceled, carrier == "AA" & arr_delay >= 300)
+```
+
+
+(c) Departed from LGA, and had an average flight speed lower than 150 mph (miles per hour).
+
+```{r}
+mutate(not_canceled, flight_time = (arr_time - dep_time)/60) %>%
+  mutate(speed = distance / flight_time) %>%
+  filter(origin == "LGA", speed < 150)
+```
+
+
+***
+
+## **Q3 [25 pt]** Average departure delays by month
+
+(a) What was the average departure delay in each month? 
+Report your answer in a table with 12 rows (one row for each month) and three columns (month, the number of non-canceled flights in the month, and the average departure delay in the month). 
+Sort your table by the average departure delay.
+
+Which month had the largest average departure delay? Which month had the smallest average departure delay?
+
+```{r}
+grouped_Data <- group_by(not_canceled, month) %>%
+  summarize(count = n(), avg_delay = mean(dep_delay, na.rm = TRUE)) %>%
+  arrange(desc(avg_delay))
+grouped_Data
+
+# July (month 7 had the highest average delay)
+# September (month 9 had the lowest average delay)
+```
+
+
+(b) Draw a bar plot to display the monthly average departure delays. Do you observe any seasonal trend?
+
+```{r}
+result <- grouped_Data
+
+ggplot(result, aes(x = month, y = avg_delay, fill = month)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Monthly Average Departure Delays",
+       x = "Month",
+       y = "Average Departure Delay (minutes)") +
+  theme_minimal()
+```
+
+
+***
+
+## **Q4 [30 pt]** Summarize flight arrival delays by destination airport
+
+(a) Generate a table, where each row is a unique destination airport. 
+Save your results in a tibble called `not_canceled_per_dest`. The table should have five columns:
+
+- the destination airport,
+- the total number of non-canceled flights to the destination, 
+- the number of unique carriers that had non-canceled flights to the destination,
+- the average arrival delays at the destination,
+- the standard deviation of the arrival delays at the destination.
+
+```{r}
+not_canceled_per_dest <- group_by(not_canceled, dest) %>% summarise(num_not_cancelled_count = n(), unique_carriers = n_distinct(carrier),  avg_delay = mean(arr_delay, na.rm = TRUE), std_dev = sd(arr_delay, na.rm = TRUE))
+not_canceled_per_dest
+```
+
+
+(b) Visualize your results in part (a) in a USA states map. 
+Draw each destination airport as a point on the states map. Map a point aesthetic to the total number of non-canceled flights flew to each destination from NYC in 2013, and map another point aesthetic to the the average arrival delays at each destination.
+
+**Hint**: You can find out the coordinates of the destination airports from `nycflights13::airports` data. 
+Join the table `not_canceled_per_dest` you obtained in (a) and the `airports` table using destination airport FAA code as the key: `inner_join(not_canceled_per_dest, airports, by = c("dest" = "faa"))`.
+
+```{r}
+usa_states <- map_data("state")
+#usa_states
+airports <- nycflights13::airports
+join_data <- inner_join(not_canceled_per_dest, airports, by = c("dest" = "faa"))
+#join_data
+ggplot() +
+  # Use geom_polygon to map USA states map: x = long, y = lat, group = group: default
+  geom_polygon(usa_states, mapping = aes(x = long, y = lat, group = group)) +
+  # Add each destination as a point on the map
+  geom_point(join_data, mapping = aes(x = lon, y = lat, size = num_not_cancelled_count, color = avg_delay)) +
+  labs(x = "Longitude", y = "Latitude", title = "Flights from NYC in 2013") +
+  theme_minimal() +
+  theme(legend.position = "right")
+```
+
+
+***
+
+## **Q5 [35 pt]** Plan your travel schedule to avoid delays
+
+Suppose you plan to travel from New York City to Los Angeles. You are interested in using the historical data in `nycflights13` to figure out a good travel plan.
+
+(a) There are three airports in New York City (`JFK`, `LGA`, and `EWR`) and five airports in the Greater Los Angeles area (`LAX`, `LGB`, `SNA`, `BUR`, `ONT`). 
+How many flights departed from NYC airports and arrived at LA airports in 2013?
+How many flights were operated between each pair of NY origin airport and LA destination airport?
+Which origin and destination airport pair had the largest number of connecting flights?
+
+```{r}
+nyc_la_flights <- not_canceled %>%
+  filter(origin %in% c("JFK", "LGA", "EWR") & dest %in% c("LAX", "LGB", "SNA", "BUR", "ONT"))
+
+# Count total flights from NYC to LA
+total_nyc_la_flights <- nrow(nyc_la_flights)
+
+# Count flights between each pair of NY origin airport and LA destination airport
+flight_counts <- nyc_la_flights %>%
+  group_by(origin, dest) %>%
+  summarise(num_flights = n())
+
+# Find the origin and destination airport pair with the largest number of connecting flights
+largest_pair <- flight_counts %>%
+  filter(num_flights == max(num_flights))
+
+# Print results
+print(paste("Total flights from NYC to LA in 2013:", total_nyc_la_flights))
+print("Flights between each pair of NY origin airport and LA destination airport:")
+print(flight_counts)
+print("Origin and destination airport pair with the largest number of connecting flights:")
+print(largest_pair)
+```
+
+
+(b) Suppose you have decided to take the route between the origin and destination airports that had the largest number of connecting flights as identified in part (a).
+
+Make a summary table, where each row is an airline carrier that operated on this route, and the columns are the number of non-canceled flights per carrier, the average departure delays per carrier, and the average arrival delays per carrier.
+
+Which carrier had the smallest average arrival delays?
+
+```{r}
+jfk_lax_flights <- not_canceled %>%
+  filter(origin == "JFK" & dest == "LAX")
+
+# Group data by carrier and calculate relevant statistics
+carrier_summary <- jfk_lax_flights %>%
+  filter(!is.na(arr_delay) & !is.na(dep_delay)) %>%
+  group_by(carrier) %>%
+  summarise(
+    num_flights = n(),
+    avg_dep_delay = mean(dep_delay, na.rm = TRUE),
+    avg_arr_delay = mean(arr_delay, na.rm = TRUE)
+  )
+
+# Find the carrier with the smallest average arrival delays
+smallest_arr_delay_carrier <- carrier_summary %>%
+  filter(avg_arr_delay == min(avg_arr_delay))
+
+# Print summary table
+print("Summary Table for JFK to LAX Route:")
+print(carrier_summary)
+
+# Print carrier with smallest average arrival delays
+print("Carrier with the Smallest Average Arrival Delays:")
+print(smallest_arr_delay_carrier)
+# DL carrier
+```
+
+
+(c) Suppose now you have decided to take the route as identified in part (a) and the carrier that had the smallest average arrival delays on this route as identified in part (b).
+
+What time of day should you fly out of NYC, if you want to avoid delays as much as possible? 
+
+To answer this question, first make a scatter plot, where the x-axis are the `hour` variable, the y-axis is the flight arrival delay. Each point is for one flight. Add a regression fitting line to your plot. Do you observe any pattern?
+
+```{r}
+jfk_lax_flights_smallest_arr_delay_flight <- not_canceled %>%
+  filter(origin == "JFK" & dest == "LAX" & carrier == "DL") %>% arrange(hour)
+jfk_lax_flights_smallest_arr_delay_flight
+
+# Create a scatter plot with regression fitting line
+ggplot(jfk_lax_flights_smallest_arr_delay_flight, aes(x = hour, y = arr_delay)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Flight Arrival Delays vs. Departure Hour",
+       x = "Hour of Departure",
+       y = "Arrival Delay (minutes)") +
+  theme_minimal()
+
+```
+There is one flight which is between 9am and 12pm which is at 11.39, and according to the scatter plot, the 11.30 flight would be the one with the least delay.
+
+
+(d) Customize your scatter plot (for example, set `alpha`, set `position`, set `ylim()`, etc.), or propose a better visualization plot to answer the above question. Describe your findings.
+
+```{r}
+ggplot(jfk_lax_flights_smallest_arr_delay_flight, aes(x = hour, y = arr_delay)) +
+  geom_point(alpha = 0.5, position = position_jitter(width = 0.3), color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(title = "Flight Arrival Delays vs. Departure Hour",
+       x = "Hour of Departure",
+       y = "Arrival Delay (minutes)") +
+  theme_minimal() +
+  # ylim(0, max(jfk_lax_flights_smallest_arr_delay_flight$arr_delay) + 10) +
+  coord_cartesian(ylim = (c(-50, 150))) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+A box plot can be a better choice. A box plot can show the distribution of arrival delays at different hours of the day, allowing for a clearer comparison and identification of potential patterns.
+
+```{r}
+ggplot(jfk_lax_flights_smallest_arr_delay_flight, aes(x = factor(hour), y = arr_delay)) +
+  geom_boxplot(fill = "skyblue", color = "darkblue") +
+  # geom_boxplot(mapping = aes(fill = factor(hour))) +
+  labs(title = "Flight Arrival Delays by Departure Hour",
+       x = "Hour of Departure",
+       y = "Arrival Delay (minutes)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+
+
+(e) Make a summary table, where each row is one departure hour (as in the `hour` variable), and the columns are the hour, the number of non-canceled flights per hour, the average departure delays per hour, and the average arrival delays per hour. Here we are restricted to the route identified in part (a) and the carrier selected in part (b).
+
+```{r}
+jfk_lax_flights_smallest_arr_delay_flight <- not_canceled %>%
+  filter(origin == "JFK" & dest == "LAX" & carrier == "DL") %>% arrange(hour)
+jfk_lax_flights_smallest_arr_delay_flight
+# Create a summary table by departure hour
+hourly_summary <- jfk_lax_flights_smallest_arr_delay_flight %>%
+  filter(!is.na(arr_delay) & !is.na(dep_delay)) %>%
+  group_by(hour) %>%
+  summarise(
+    num_flights = n(),
+    avg_dep_delay = mean(dep_delay, na.rm = TRUE),
+    avg_arr_delay = mean(arr_delay, na.rm = TRUE)
+  )
+
+# Print the summary table
+print(hourly_summary)
+```
+
+
+***
+
+## **Q6 [30 pt]** Predict flight cancellation rates using weather information.
+
+<font color="blue">**For this question, use the full `flights` table, rather than the `not_canceled` table.**</font>
+
+The `nycflights13::weather` data contains hourly meteorological data for LGA, JFK and EWR. 
+
+Suppose we are interested in predicting the daily flight cancellation rates using the weather information. Complete the following analyses.
+
+(a) Use the `nycflights13::weather` data to calculate the daily weather information at LGA in 2013. 
+Here we only consider the following six weather-related variables: 1) temperature, 2) humidity, 3) wind speed, 4) precipitation, 5) sea level pressure, and 6) visibility.
+
+Save your results in a tibble called `weather_LGA_daily`. The table should have nine columns: year, month, day, followed by the six daily average weather variables.
+
+```{r}
+weather_LGA_daily <- nycflights13::weather %>%
+  filter(origin == "LGA" & year == 2013) %>%
+  group_by(year, month, day) %>%
+  summarise(
+    temperature = mean(temp, na.rm = TRUE),
+    humidity = mean(humid, na.rm = TRUE),
+    wind_speed = mean(wind_speed, na.rm = TRUE),
+    precipitation = mean(precip, na.rm = TRUE),
+    sea_level_pressure = mean(pressure, na.rm = TRUE),
+    visibility = mean(visib, na.rm = TRUE)
+  )
+weather_LGA_daily
+```
+
+
+(b) Use the **full `flights` data** to calculate the daily flight cancellation rates at LGA in 2013. **Do NOT use the the `not_canceled` table.**
+
+Save your results in a tibble called `cancellation_rate_LGA_daily`. The table should have six columns: year, month, day, the number of flights scheduled in the day, the number of non-canceled flights departed in the day, and the daily flight cancellation rate.
+
+```{r}
+cancellation_rate_LGA_daily <- flights %>%
+  filter(origin == "LGA" & year == 2013) %>%
+  group_by(year, month, day) %>%
+  summarise(
+    num_flights_scheduled = n(),
+    num_non_canceled_flights = sum(!is.na(dep_delay)),
+    cancellation_rate = 1 - num_non_canceled_flights / num_flights_scheduled
+  )
+
+# View the resulting tibble
+print(cancellation_rate_LGA_daily)
+```
+
+
+(c) Now join the two tables your obtained from parts (a) and (b) by calling `inner_join(cancellation_rate_LGA_daily, weather_LGA_daily)`.
+
+```{r}
+# Join weather and cancellation rate tables
+joined_data <- inner_join(cancellation_rate_LGA_daily, weather_LGA_daily)
+
+# View the joined data
+print(joined_data)
+```
+
+
+(d) Apply a multiple linear regression model to to predict the daily cancellation rates at LGA, using the following six weather predictors: 1) temperature, 2) humidity, 3) wind speed, 4) precipitation, 5) sea level pressure, and 6) visibility. 
+
+Which predictors are significantly associated with the response variable? Explain your answer. 
+
+```{r}
+# Fit a multiple linear regression model
+model <- lm(cancellation_rate ~ temperature + humidity + wind_speed + precipitation + sea_level_pressure + visibility, data = joined_data)
+
+# Summary of the regression model
+summary(model)
+```
+Humidity, wind_speed and visibility are the 3 variables which are significantly associated with the response variable. Looking at their p-values, they seem to be less that 0.05, hence we can strongly say that they are significant to the response variable, which is cancellation_rate.
+
+***

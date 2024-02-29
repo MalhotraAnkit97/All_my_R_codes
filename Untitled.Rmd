@@ -1,0 +1,26 @@
+---
+title: "DPLYR_practice_notebook"
+output: html_notebook
+---
+
+This file will mainly focus on dplyr library and applications
+
+```{r}
+library("tidyverse")
+library(statsr)
+```
+
+```{r}
+flights = nycflights
+View(flights)
+
+filter(flights, is.na()) %>% count()
+
+```
+
+```{r}
+arrange(flights, desc(year), month, desc(day))
+```
+
+
+

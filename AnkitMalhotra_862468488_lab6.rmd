@@ -1,0 +1,146 @@
+---
+title: "STAT232 Lab #6"
+author: 
+- name: "Ankit Malhotra"
+  email: "amalh017@ucr.edu"
+# date: "2021/5/7"
+output:
+  html_document:
+    toc: yes
+---
+
+# **Discussion week 6 instructions**
+
+This week, we will review example code for linear regression.
+
+- First, download the `rmd` file from iLearn.
+- Open this `rmd` file in RStudio and click `Knit -> Knit to HTML` to render it to HTML format. (If you have `LaTex` installed on your computer, you can also render it to PDF format).
+- Read this `rmd` file and the rendered `html` file side-by-side, to see how this document was generated!
+- Be sure to play with this document! Change it. Break it. Fix it. The best way to learn R Markdown (or really almost anything) is to try, fail, then find out what you did wrong.
+- Read over the example code and the output. If you have any questions about certain functions or parameters, it is the time to ask!
+- There are some exercises through out this document. Replace **INSERT_YOUR_ANSWER** with your own answers. Knit the file to HTML, and check your results.
+
+<font color="blue">**Please comment your R code thoroughly, and follow the R coding style guideline (https://google.github.io/styleguide/Rguide.xml). Partial credit will be deducted for insufficient commenting or poor coding styles.**</font>
+
+**Lab submission guideline**
+
+- After you completed all exercises, save your file to `FirstnameLastname-SID-lab6.rmd` and save the rendered html/pdf file to `FirstnameLastname-SID-lab6.html` or `FirstnameLastname-SID-lab6.pdf`.
+- Submit **BOTH your source `rmd` file and the knitted `html` or `pdf` file** to **eLearn**. Do NOT create a zip file. You can submit multiple times, you last submission will be graded.
+
+***
+
+# **Lecture Review - Linear Regression**
+
+## Install necessary package
+Note that you only need to install each package once. Then you can comment out the following installation lines.
+
+```{r, collapse=T}
+# install.packages("MASS")
+```
+
+## Load necessary packages
+```{r, collapse=T}
+library(tidyverse)
+
+library(MASS) # for the `Boston` data set
+```
+
+## The `Boston` data set
+
+The `Boston` data set (included in the `MASS` library) contains housing values in 500+ suburbs of Boston.
+
+```{r, collapse=T}
+?Boston # full documentation
+dim(Boston)
+#str(Boston)
+glimpse(Boston)
+```
+
+## Simple linear regression
+
+First, let's run a simple linear regression to predict median housing values `medv` using only one predictor `lstat` -- percent of lower status population.
+
+```{r, collapse=T}
+lm.fit <- lm(medv ~ lstat, Boston)
+summary(lm.fit)
+```
+
+When calling `lm(medv ~ lstat, Boston)`, the `lm` function builds the following linear model to fit the data:
+$$ Y=f(X)+\epsilon = \beta_0 + \beta_1 X + \epsilon ,$$
+where $Y$=`Boston$medv`, $X$=`Boston$lstat`, and $\epsilon$ is the measurement noise/error.
+
+In the lecture, we have learned that the loss function for the least squares regression is the **residual sum of squares (RSS)**.
+
+$$ 
+\begin{aligned}
+\text{RSS} =  L(\beta_0, \beta_1) & = \sum_{i=1}^{n} r_i^2 \\
+  & = \sum_{i=1}^{n} (y_i - \beta_0 - \beta_1 x_i )^2
+\end{aligned} 
+$$
+And the analytical solution that **minimizes RSS** is
+
+$$ 
+\begin{aligned}
+ \hat{\beta_1} & = 
+ \frac{\sum_{i=1}^{n} (x_i - \bar{x})(y_i - \bar{y})}
+ {\sum_{i=1}^{n} (x_i - \bar{x})^2} \\
+ \hat{\beta_0} & = \bar{y} -  \hat{\beta_1} \bar{x}
+\end{aligned} 
+$$
+
+The estimates $\hat{\beta_0}$ and $\hat{\beta_1}$ is saved in `lm.fit$coefficients`.
+
+```{r, collapse=T}
+names(lm.fit)
+lm.fit$coefficients
+```
+
+### **Exercise #1**
+
+Do you think there is a strong relationship between `medv` and `lstat`?   
+Explain your answer. Which statistic(s) did you use to draw your conclusion?
+
+**Yes, there is a strong relationship defined between medv and lstat. For which, we can say that lstat has a negative value, showing that there is an inverse relationship and because the p-value measurement as seen is 2e^-12, hence it shows that the relationship between the variables is significant, hence showing a strong relationship**
+
+***
+
+In the lecture, we learned that one measurement of the regression model accuracy is the $R^2$ statistic, which is the proportion of variance in the response variable that can be explained by the regression fit.
+
+### **Exercise #2**
+
+(a) Look at the `summary(lm.fit)` output in the previous code chunk, what is $R^2$ statistic of your model?
+
+**The R^2 statistic is : Multiple R-squared:  0.5441, as shown in the summary(lm.fit)**
+
+(b) For simple linear regression, $R^2$ statistic equals $r^2$, where $r$ is the correlation coefficient between $X$ and $Y$.  
+
+Use the `cor` package to calculate $r$, compare $r^2$ with $R^2$. Do you get the same value?
+```{r}
+R2 <- 0.5441
+r <- cor(Boston$medv, Boston$lstat)
+r2 <- round(r^2, 4)
+
+
+print(r2==R2)
+```
+
+
+**YES, we get the SAME value as shown in the code below.**
+
+***
+
+### **Exercise #3**
+
+Choose another predictor other than `lstat` and build a simple linear regression model to predict `medv` using your new predictor. Compare your model with the `lm.fit` (`medv` ~ `lstat`) model. Which model is better?   
+Explain your answer. Which statistic(s) did you use to draw your conclusion?
+
+```{r}
+another_lm.fit <- lm(medv ~ age, Boston)
+summary(another_lm.fit)
+```
+
+
+**I used the "age" variable instead of lstat, and in my belief and understanding, the "lstat" variable, and the previous model, with lstat as the predictor variable is better. 
+I came to this conclusion by comparing both their adjusted R^2 values, in which, the first model has an R^2 of 54.32% and the model with age as the predictor variable has an R^2 of 14.04, which is not a good fit compared to the other one.
+**
+

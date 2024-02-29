@@ -1,0 +1,202 @@
+---
+title: "STAT232 Lab #4"
+author: 
+- name: Ankit Malhotra
+  email: amalh017@ucr.edu
+# date: "2021/4/23"
+output:
+  html_document:
+    toc: yes
+---
+
+# **Discussion week 4 instructions**
+
+This week, we will review some `ggplot2` example figures. 
+
+
+- First, download the `rmd` file from iLearn. 
+- Open this `rmd` file in RStudio and click `Knit -> Knit to HTML` to render it to HTML format. (The computer lab computers do not have `LaTex` installed so you can not render it to PDF format).
+- Read this `rmd` file and the rendered `html` file side-by-side, to see how this document was generated!
+- Be sure to play with this document! Change it. Break it. Fix it. The best way to learn R Markdown (or really almost anything) is to try, fail, then find out what you did wrong.
+
+- Read over the `ggplot2` example code and check the output. If you have any questions about certain functions or parameters, it is the time to ask!
+- There are some exercises through out this document. Replace **INSERT_YOUR_ANSWER** with your own answers. Knit the file to HTML, and check your results.
+
+<font color="blue">**Please comment your R code thoroughly, and follow the R coding style guideline (https://google.github.io/styleguide/Rguide.xml). Partial credit will be deducted for insufficient commenting or poor coding styles.**</font>
+
+**Lab submission guideline**
+
+- After you completed all exercises, save your file to `FirstnameLastname-SID-lab4.rmd` and save the rendered html/pdf file to `FirstnameLastname-SID-lab4.html` or `FirstnameLastname-SID-lab4.pdf`.
+- Submit **BOTH your source `rmd` file and the knitted `html` or `pdf` file** to **eLearn**. Do NOT create a zip file. You can submit multiple times, you last submission will be graded.
+
+***
+
+# **Lecture Review - `ggplot2`**
+
+## Install the The `tidyverse` package
+
+```{r, collapse=T}
+# install the tidyverse package first if you have not done it  yet.
+#install.packages("tidyverse") # you can comment out this line after you have installed `tidyverse`
+library(tidyverse)
+```
+
+## The `mpg` data set
+
+This data set contains fuel economy data 1999 - 2008 for 38 popular car models (source: EPA. [fueleconomy.com/](http://fueleconomy.gov)).
+
+```{r, collapse=T}
+?mpg
+dim(mpg)  # dimension of the table
+mpg  # print/view mpg (we will introduce tibble later in this class)
+str(mpg)  # list the structures in mpg
+glimpse(mpg) # get a glimpse of the mpg data
+```
+
+
+## The complete graphing template in `ggplot2`
+```{r, eval=F}
+ggplot(data = <DATA>) + 
+  <GEOM_FUNCTION>(
+     mapping = aes(<MAPPINGS>),
+     stat = <STAT>,        # optional
+     position = <POSITION> # optional
+  ) +
+  <COORDINATE_FUNCTION> +  # optional
+  <FACET_FUNCTION> +       # optional
+  <SCALE_FUNCTION> +       # optional
+  <THEME_FUNCTION>         # optional
+```
+
+## Example: `geom_boxplot()` for one variable
+
+Let's first take a look at the distribution of highway mileage.
+
+```{r}
+ggplot(data = mpg) +
+  geom_boxplot(mapping = aes(x = "", y = hwy)) 
+```
+
+### **Exercise #1**
+
+If you add `facet_wrap(~class)` to the above code, what will happen?
+
+**INSERT_YOUR_ANSWER (Include BOTH codes and words explanation)**
+
+```{r}
+ggplot(data = mpg) +
+  geom_boxplot(mapping = aes(x = "", y = hwy)) +
+  facet_wrap(~class)
+```
+
+Ans - Adding facet_wrap(~class) to the code will result in making multiple boxplots, of all the unique attributes of the class variable. facet_wrap() basically wraps a 1d sequence of panels into 2d
+
+
+## Example: `geom_boxplot()` for two variables
+
+How highway mileage varies across car classes?
+
+- Plot the distribution of highway mileage by class.
+
+```{r}
+ggplot(data = mpg) +
+  geom_boxplot(mapping = aes(x = class, y = hwy))  
+```
+
+To make the trend easier to see, we can reorder `class` based on the median value of `hwy`.
+
+```{r}
+ggplot(data = mpg) +
+  geom_boxplot(mapping = aes(x = reorder(class, hwy, FUN = median), 
+                             y = hwy))
+```
+
+When you have long variable names, `geom_boxplot()` will work better if you flip it with `coord_flip()`.
+
+```{r}
+ggplot(data = mpg) +
+  geom_boxplot(mapping = aes(x = reorder(class, hwy, FUN = median), 
+                             y = hwy)) +
+  xlab("class") +
+  coord_flip()
+```  
+
+### **Exercise #2**
+
+Can you draw a violin plot to compare the distribution of highway mileage varies across car classes? Order your violins by the median values of highway mileage and flip the plot to horizontal. 
+
+
+```{r}
+ggplot(data = mpg) +
+  geom_violin(mapping = aes(x=reorder(class, hwy, FUN = median), y = hwy)) + 
+  coord_flip()
+```
+
+
+### **Exercise #3**
+
+There are two ways to zoom in a ggplot. Compare the following two plots. What are the differences? Which zooming option do you prefer? Explain your reasons.
+
+`HINT1: Which code will have warning message? and what's the meaning of such warning?`
+
+`HINT2: See the help page for coord_cartesian()`
+
+There are ideally 2 approaches when it comes to zoom in GGplot : -
+
+1. xlim & ylim approach : 
+In this method, limits are set to x and y axes, points standing outside the range will be eliminated.
+If there are any statistical summaries or smooths calculated in the plot, they will be affected by the limited data.
+THIS METHOD WILL GIVE a WARNING MESSAGE if data points are outside the specified range, indicating that some data is being discarded.
+
+2. coord_cartesian() Approach :
+This method does not remove data points outside the specified range; it only changes what is visible on the plot.
+The statistical summaries or smooths are calculated using the entire dataset, not just the visible portion.
+This approach is more flexible for exploration and analysis, as it allows you to zoom in without losing information.
+
+Amongst the two approaches, there is no TRUE one approach which one can choose. Both the approaches are different, and have different use cases.I would use xlim & ylim method, when i want to work with separate sets of points and when i want to zoom into only one plot, whereas, i would prefer to use the coord_cartesian method when i want to zoom into graphs without worrying about the points.
+
+
+
+```{r, collapse=T}
+ggplot(data = mpg) +
+  geom_boxplot(mapping = aes(x = class, y = hwy)) +
+  ylim(c(20, 30))
+```  
+
+```{r, collapse=T}
+ggplot(data = mpg) +
+  geom_boxplot(mapping = aes(x = class, y = hwy)) +
+  coord_cartesian(ylim=c(20, 30))
+```  
+
+## Example: `geom_histogram()` to compare highway mileage across car classes
+
+```{r, collapse=T}
+ggplot(data = mpg) +
+  geom_histogram(mapping = aes(x = hwy, fill = class), 
+                 binwidth = 10,
+                 position = "dodge")
+```
+
+### **Exercise #4**
+
+(a) Why there are gaps in the histogram?
+
+There are gaps in the histogram because of "fill=class" snippet of code. What that tries to do is, it searches for varities of classes being in the range of hwy. But, few classes do not operate on certain data points on hwy variable (for e.g. for the value b/w hwy = 30 - 32), there are no classes accommodating the data point for that range of hwy. Hence, there are gaps.
+
+(b) Can you change this frequency histogram to a density histogram?
+
+```{r}
+ggplot(data = mpg) + 
+  geom_histogram(mapping = aes(x = hwy, fill = class, y = after_stat(density)), binwidth = 10, position = "dodge")
+```
+
+
+
+## Example: `geom_freqpoly()` to compare highway mileage across car classes
+
+```{r, collapse=T}
+ggplot(data = mpg) +
+  geom_freqpoly(mapping = aes(x = hwy, color = class),
+                binwidth = 10)
+```

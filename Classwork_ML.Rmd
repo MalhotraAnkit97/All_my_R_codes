@@ -1,0 +1,97 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r}
+# flightsData = library(nycflights13)
+# glimpse(flightsData)
+glimpse(flights)
+```
+
+
+LINEAR REGRESSION | Deep Learning - Neural Networks
+
+Flow of an  ML pathway : - 
+
+1. As
+2. Get
+3. Explore
+4. Model
+5. Communicate | Visualize
+
+
+
+```{r}
+advertising <- read_csv("Advertising.csv")
+
+advertising
+
+```
+
+```{r}
+library(tidyverse)
+library(gridExtra)
+library(ggplot2)
+
+plot1 <- ggplot(data = advertising, aes(x = TV, y = sales)) + 
+  geom_point() + geom_smooth(method = "lm")
+
+
+plot2 <- ggplot(data = advertising, aes(x = radio, y = sales)) + 
+  geom_point() + geom_smooth(method = "lm")
+
+
+plot3 <- ggplot(data = advertising, aes(x = newspaper, y = sales)) + 
+  geom_point() + geom_smooth(method = "lm")
+
+grid.arrange(plot1, plot2, plot3, ncol = 3)
+
+```
+
+factors for good predictor models : -
+
+1. Generalizability
+2. Bias-Variance tradeoff
+3. interpretability-Flexibility
+4. Feature Engineering
+
+
+Is there synergy among the advertising media?
+
+Linear regression only holds for a particular range.
+
+For example, if we have a data comparing marketing budget and sales, increasing marketing budget may not always mean an increase in sales / profit. If the market becomes saturated, then increasing the marketing budget will actually not mean a constant increase because the product is now exhausted or saturated.
+
+If there is no relationship b/w the predictor variables, then should the multiple R^2 be equal to 0?
+
+IMP **
+
+There are 2^p different permutations of models possible given there are p number of variables
+
+ALGO IS GREEDY, its going to find some kind of relationship even if it is redundant or unnecessary variable, 
+
+ofcourse, adjusted r-squared is better
+
+
+IMP **
+
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
